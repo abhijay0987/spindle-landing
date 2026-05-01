@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spindle — AI Style Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --midnight: #2C2A4A;
+      --slate:    #4F518C;
+      --amethyst: #907AD6;
+      --lavender: #DABFFF;
+      --cream:    #F7F3EE;
+      --white:    #FFFFFF;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--cream);
+      color: var(--midnight);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE TEXTURE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Left panel */
+    .hero-left {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 64px 80px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--lavender);
+      color: var(--midnight);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 100px;
+      width: fit-content;
+      margin-bottom: 32px;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .badge-dot {
+      width: 6px; height: 6px;
+      background: var(--amethyst);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(52px, 6vw, 88px);
+      font-weight: 300;
+      line-height: 1.0;
+      letter-spacing: -1px;
+      color: var(--midnight);
+      margin-bottom: 8px;
+      animation: fadeUp 0.8s 0.1s ease both;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--amethyst);
+    }
+
+    .tagline {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(16px, 2vw, 24px);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--slate);
+      margin-bottom: 32px;
+      animation: fadeUp 0.8s 0.2s ease both;
+    }
+
+    .description {
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--slate);
+      max-width: 480px;
+      margin-bottom: 48px;
+      animation: fadeUp 0.8s 0.3s ease both;
+    }
+
+    .cta-group {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      animation: fadeUp 0.8s 0.4s ease both;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--midnight);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      padding: 16px 32px;
+      border-radius: 100px;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.2s;
+      box-shadow: 0 8px 24px rgba(44, 42, 74, 0.2);
+    }
+
+    .btn-primary:hover {
+      background: var(--slate);
+      transform: translateY(-2px);
+    }
+
+    .btn-primary svg { width: 18px; height: 18px; }
+
+    .coming-soon-note {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--amethyst);
+      letter-spacing: 0.5px;
+    }
+
+    /* Right panel — abstract fashion illustration */
+    .hero-right {
+      position: relative;
+      background: var(--midnight);
+      overflow: hidden;
+      animation: fadeIn 1.2s ease both;
+    }
+
+    .hero-right::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg,
+        rgba(144, 122, 214, 0.3) 0%,
+        rgba(44, 42, 74, 0.0) 60%,
+        rgba(218, 191, 255, 0.15) 100%
+      );
+    }
+
+    /* Floating fashion silhouette shapes */
+    .shape {
+      position: absolute;
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      opacity: 0.12;
+    }
+
+    .shape-1 {
+      width: 300px; height: 500px;
+      background: var(--lavender);
+      top: -60px; left: 20%;
+      transform: rotate(-15deg);
+      animation: float1 8s ease-in-out infinite;
+    }
+
+    .shape-2 {
+      width: 180px; height: 300px;
+      background: var(--amethyst);
+      top: 30%; left: 55%;
+      transform: rotate(20deg);
+      border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+      animation: float2 10s ease-in-out infinite;
+      opacity: 0.18;
+    }
+
+    .shape-3 {
+      width: 400px; height: 400px;
+      background: var(--slate);
+      bottom: -100px; left: -60px;
+      border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+      animation: float3 12s ease-in-out infinite;
+      opacity: 0.2;
+    }
+
+    @keyframes float1 {
+      0%, 100% { transform: rotate(-15deg) translateY(0); }
+      50% { transform: rotate(-12deg) translateY(-20px); }
+    }
+    @keyframes float2 {
+      0%, 100% { transform: rotate(20deg) translateY(0); }
+      50% { transform: rotate(24deg) translateY(15px); }
+    }
+    @keyframes float3 {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-10px) scale(1.02); }
+    }
+
+    /* Center text on right panel */
+    .hero-right-content {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px 40px;
+      text-align: center;
+    }
+
+    .hero-icon {
+      font-size: 72px;
+      margin-bottom: 24px;
+      animation: floatIcon 6s ease-in-out infinite;
+    }
+
+    @keyframes floatIcon {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    .hero-right-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      font-weight: 300;
+      color: var(--lavender);
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+      line-height: 1.2;
+    }
+
+    .hero-right-sub {
+      font-size: 14px;
+      color: rgba(218, 191, 255, 0.7);
+      line-height: 1.7;
+      max-width: 280px;
+    }
+
+    /* ── FEATURES ── */
+    .features {
+      padding: 100px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--amethyst);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(36px, 4vw, 56px);
+      font-weight: 300;
+      color: var(--midnight);
+      margin-bottom: 60px;
+      max-width: 600px;
+      line-height: 1.1;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: rgba(79, 81, 140, 0.1);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.03);
+    }
+
+    .feature-card {
+      background: var(--cream);
+      padding: 48px 40px;
+      transition: background 0.3s, transform 0.3s;
+    }
+
+    .feature-card:hover { 
+      background: var(--white); 
+    }
+
+    .feature-icon {
+      font-size: 36px;
+      margin-bottom: 24px;
+      display: inline-block;
+      padding: 12px;
+      background: rgba(144, 122, 214, 0.1);
+      border-radius: 16px;
+    }
+
+    .feature-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--midnight);
+      margin-bottom: 12px;
+    }
+
+    .feature-desc {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--slate);
+    }
+
+    /* ── HOW IT WORKS ── */
+    .how {
+      padding: 100px 80px;
+      background: var(--midnight);
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .how::before {
+      content: '';
+      position: absolute;
+      width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(144,122,214,0.15) 0%, transparent 70%);
+      top: -200px; right: -200px;
+      pointer-events: none;
+    }
+
+    .how .section-label { color: var(--lavender); }
+
+    .how .section-title { color: var(--white); }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 60px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step {
+      position: relative;
+    }
+
+    .step-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 80px;
+      font-weight: 300;
+      color: rgba(218, 191, 255, 0.15);
+      line-height: 1;
+      margin-bottom: 20px;
+      transition: color 0.3s;
+    }
+
+    .step:hover .step-num { color: rgba(218, 191, 255, 0.4); }
+
+    .step-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 24px;
+      color: var(--lavender);
+      margin-bottom: 12px;
+      font-weight: 400;
+    }
+
+    .step-desc {
+      font-size: 15px;
+      line-height: 1.7;
+      color: rgba(218, 191, 255, 0.6);
+    }
+
+    /* ── MARKETS ── */
+    .markets {
+      padding: 100px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .markets-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-top: 60px;
+    }
+
+    .market-card {
+      border: 1px solid rgba(79, 81, 140, 0.15);
+      border-radius: 24px;
+      padding: 48px;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      background: var(--white);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+    }
+
+    .market-card:hover {
+      border-color: var(--amethyst);
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(144, 122, 214, 0.1);
+    }
+
+    .market-flag { font-size: 42px; margin-bottom: 20px; }
+
+    .market-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      font-weight: 400;
+      color: var(--midnight);
+      margin-bottom: 12px;
+    }
+
+    .market-desc {
+      font-size: 15px;
+      color: var(--slate);
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+
+    .market-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tag {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      padding: 6px 14px;
+      border-radius: 100px;
+      background: rgba(144, 122, 214, 0.1);
+      color: var(--slate);
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .tag:hover {
+      background: var(--amethyst);
+      color: var(--white);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 48px 80px;
+      border-top: 1px solid rgba(79, 81, 140, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+      background: var(--cream);
+    }
+
+    .footer-brand {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--midnight);
+    }
+
+    .footer-note {
+      font-size: 13px;
+      color: var(--slate);
+    }
+
+    .footer-links a {
+      color: var(--slate);
+      text-decoration: none;
+      font-size: 13px;
+      margin-left: 24px;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--amethyst); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1100px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero-right { min-height: 400px; }
+      .hero-left { padding: 60px 32px; }
+      .features { padding: 80px 32px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .how { padding: 80px 32px; }
+      .steps { grid-template-columns: 1fr; gap: 40px; }
+      .markets { padding: 80px 32px; }
+      .markets-grid { grid-template-columns: 1fr; }
+      footer { padding: 40px 32px; flex-direction: column; gap: 20px; text-align: center; }
+      .footer-links a { margin: 0 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <section class="hero">
+    <div class="hero-left">
+      <div class="badge">
+        <div class="badge-dot"></div>
+        Beta Access Available
+      </div>
+
+      <h1>Spindle<br/><em>AI Studio</em></h1>
+      <p class="tagline">Your wardrobe, reimagined by AI.</p>
+
+      <p class="description">
+        Spindle is an AI-powered personal styling engine. We digitize your closet, chat with you about your style needs, pack for your travels, and generate flawless outfits curated just for you.
+      </p>
+
+      <div class="cta-group">
+        <a href="#" class="btn-primary">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3.18 23.76c.3.17.64.24.99.2L16.89 12 13.06 8.17 3.18 23.76zm17.26-10.7L17.7 11.6l-1.02-.6-3.39 3.39 3.5 3.5 3.63-2.02c1.04-.58 1.04-2.23.02-2.81zM3.54.32a1.27 1.27 0 0 0-.36.94v21.47c0 .36.13.68.36.94L16.3 11 3.54.32zm9.52 9.52L16.89 12 13.74 8.85l-3.62-3.62L9.06.32 3.54.32 13.06 9.84z"/>
+          </svg>
+          Get it on Google Play
+        </a>
+        <span class="coming-soon-note">Launching 2026</span>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <div class="shape shape-1"></div>
+      <div class="shape shape-2"></div>
+      <div class="shape shape-3"></div>
+      <div class="hero-right-content">
+        <div class="hero-icon">✨</div>
+        <div class="hero-right-title">AI-Powered Style,<br/>For Every Occasion</div>
+        <p class="hero-right-sub">
+          From rainy office commutes to destination weddings — Spindle builds the perfect look from the clothes you already own.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="features">
+    <p class="section-label">The Technology</p>
+    <h2 class="section-title">A complete styling ecosystem in your pocket.</h2>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">👗</div>
+        <div class="feature-title">Wardrobe AI</div>
+        <p class="feature-desc">Upload a photo, and our background-removal pipeline instantly catalogues your clothing by color, fabric, and silhouette.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧵</div>
+        <div class="feature-title">Loom Styling Engine</div>
+        <p class="feature-desc">Our proprietary physics engine mathematically layers tops, bottoms, and outerwear to generate flawless, anatomically correct outfit visualizations.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <div class="feature-title">Conversational Stylist</div>
+        <p class="feature-desc">Not sure what to wear? Chat directly with the integrated Spindle Bot. Ask for an "edgy date night look" and get instant, visual answers.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧳</div>
+        <div class="feature-title">AI Travel Planner</div>
+        <p class="feature-desc">Input your destination and dates. Spindle checks the forecast and builds a weather-proof, carry-on optimized packing list from your closet.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛍️</div>
+        <div class="feature-title">Shop the Look</div>
+        <p class="feature-desc">Missing a crucial piece? Discover shoppable recommendations natively integrated via Amazon and premium aggregators.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-title">🎯</div>
+        <div class="feature-title">Taste Profiling</div>
+        <p class="feature-desc">Spindle maps your favorite items using 768-dimensional vector embeddings to understand your unique aesthetic and adapt to your style over time.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="how">
+    <p class="section-label">The Process</p>
+    <h2 class="section-title">From digital closet to real-world confidence.</h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Digitize</div>
+        <p class="step-desc">Snap photos of your clothes. Spindle automatically removes backgrounds and securely stores them in your personal Vector DB.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">Configure</div>
+        <p class="step-desc">Open the chat or use the planner to specify your occasion, location, or travel itinerary. Spindle handles the weather logic.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Style & Shop</div>
+        <p class="step-desc">Swipe through beautifully layered, gap-free outfit options. Missing a jacket? Tap the carousel below to shop perfect matches.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="markets">
+    <p class="section-label">Cross-Border E-Commerce</p>
+    <h2 class="section-title">Built for India.<br/>Ready for the world.</h2>
+
+    <div class="markets-grid">
+      <div class="market-card">
+        <div class="market-flag">🇮🇳</div>
+        <div class="market-name">India</div>
+        <p class="market-desc">
+          Deep understanding of Indian fashion — Kurtis, Sarees, Lehengas, Anarkalis — alongside Western wear. Shoppable links dynamically routed to local retailers.
+        </p>
+        <div class="market-tags">
+          <span class="tag">Myntra</span>
+          <span class="tag">Amazon.in</span>
+          <span class="tag">Ajio</span>
+          <span class="tag">Ethnic Wear</span>
+          <span class="tag">Indo-Western</span>
+        </div>
+      </div>
+      <div class="market-card">
+        <div class="market-flag">🌍</div>
+        <div class="market-name">Global</div>
+        <p class="market-desc">
+          International fashion coverage with shoppable looks from leading global fashion networks. Style recommendations that understand complex layering.
+        </p>
+        <div class="market-tags">
+          <span class="tag">Amazon Associates</span>
+          <span class="tag">Skimlinks</span>
+          <span class="tag">ASOS</span>
+          <span class="tag">Nordstrom</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-brand">Spindle.</div>
+    <p class="footer-note">© 2026 Spindle AI Studio · The Future of Digital Wardrobes</p>
+    <div class="footer-links">
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+      <a href="mailto:hello@spindleapp.com">Contact</a>
+    </div>
+  </footer>
+
+</body>
+</html>
