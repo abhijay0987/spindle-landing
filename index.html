@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Spindle — AI Style Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Outfit:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -15,431 +15,813 @@
       --amethyst: #907AD6;
       --lavender: #DABFFF;
       --cream:    #F7F3EE;
+      --warm:     #EDE8E0;
       --white:    #FFFFFF;
+      --gold:     #C9A84C;
     }
 
     html { scroll-behavior: smooth; }
 
     body {
-      background: var(--cream);
-      color: var(--midnight);
-      font-family: 'DM Sans', sans-serif;
+      background: #0E0D1A;
+      color: var(--white);
+      font-family: 'Outfit', sans-serif;
       font-weight: 300;
       overflow-x: hidden;
+      cursor: none;
     }
 
-    /* ── NOISE TEXTURE OVERLAY ── */
+    /* Custom cursor */
+    .cursor {
+      width: 8px; height: 8px;
+      background: var(--amethyst);
+      border-radius: 50%;
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.1s ease;
+      mix-blend-mode: screen;
+    }
+
+    .cursor-ring {
+      width: 36px; height: 36px;
+      border: 1px solid rgba(144,122,214,0.4);
+      border-radius: 50%;
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9998;
+      transition: transform 0.18s ease, width 0.3s, height 0.3s, border-color 0.3s;
+    }
+
+    body:has(a:hover) .cursor-ring,
+    body:has(button:hover) .cursor-ring {
+      width: 60px; height: 60px;
+      border-color: var(--amethyst);
+      margin-left: -12px; margin-top: -12px;
+    }
+
+    /* ── NOISE ── */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
       pointer-events: none;
-      z-index: 0;
-      opacity: 0.6;
+      z-index: 1000;
     }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 24px 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to bottom, rgba(14,13,26,0.95), transparent);
+      backdrop-filter: blur(0px);
+    }
+
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--white);
+      text-decoration: none;
+    }
+
+    .nav-logo span { color: var(--amethyst); }
+
+    .nav-links {
+      display: flex;
+      gap: 40px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .nav-links a:hover { color: var(--lavender); }
 
     /* ── HERO ── */
     .hero {
       min-height: 100vh;
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
       position: relative;
+      display: flex;
+      align-items: center;
       overflow: hidden;
     }
 
-    /* Left panel */
+    /* Gradient orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    .orb-1 {
+      width: 600px; height: 600px;
+      background: var(--amethyst);
+      top: -200px; right: -100px;
+      animation: orbFloat1 12s ease-in-out infinite;
+    }
+
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: #4F518C;
+      bottom: -100px; left: -80px;
+      animation: orbFloat2 15s ease-in-out infinite;
+    }
+
+    .orb-3 {
+      width: 300px; height: 300px;
+      background: var(--lavender);
+      top: 40%; right: 30%;
+      opacity: 0.12;
+      animation: orbFloat3 10s ease-in-out infinite;
+    }
+
+    @keyframes orbFloat1 {
+      0%,100% { transform: translate(0,0) scale(1); }
+      50% { transform: translate(-40px, 30px) scale(1.08); }
+    }
+    @keyframes orbFloat2 {
+      0%,100% { transform: translate(0,0); }
+      50% { transform: translate(30px,-20px) scale(1.05); }
+    }
+    @keyframes orbFloat3 {
+      0%,100% { transform: translate(0,0); }
+      50% { transform: translate(-20px,40px); }
+    }
+
+    /* Hero grid */
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      width: 100%;
+      min-height: 100vh;
+      position: relative;
+      z-index: 2;
+    }
+
     .hero-left {
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 80px 64px 80px 80px;
-      position: relative;
-      z-index: 1;
+      padding: 140px 60px 80px 80px;
     }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--lavender);
-      color: var(--midnight);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      padding: 6px 14px;
-      border-radius: 100px;
-      width: fit-content;
-      margin-bottom: 32px;
-      animation: fadeUp 0.8s ease both;
-    }
-
-    .badge-dot {
-      width: 6px; height: 6px;
-      background: var(--amethyst);
-      border-radius: 50%;
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.8); }
-    }
-
-    h1 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(52px, 6vw, 88px);
-      font-weight: 300;
-      line-height: 1.0;
-      letter-spacing: -1px;
-      color: var(--midnight);
-      margin-bottom: 8px;
-      animation: fadeUp 0.8s 0.1s ease both;
-    }
-
-    h1 em {
-      font-style: italic;
-      color: var(--amethyst);
-    }
-
-    .tagline {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(16px, 2vw, 24px);
-      font-weight: 300;
-      font-style: italic;
-      color: var(--slate);
-      margin-bottom: 32px;
-      animation: fadeUp 0.8s 0.2s ease both;
-    }
-
-    .description {
-      font-size: 16px;
-      line-height: 1.7;
-      color: var(--slate);
-      max-width: 480px;
-      margin-bottom: 48px;
-      animation: fadeUp 0.8s 0.3s ease both;
-    }
-
-    .cta-group {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      animation: fadeUp 0.8s 0.4s ease both;
-    }
-
-    .btn-primary {
+    .eyebrow {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      background: var(--midnight);
-      color: var(--white);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
+      margin-bottom: 40px;
+      opacity: 0;
+      animation: slideUp 0.8s 0.2s ease forwards;
+    }
+
+    .eyebrow-line {
+      width: 32px;
+      height: 1px;
+      background: var(--amethyst);
+    }
+
+    .eyebrow-text {
+      font-size: 11px;
       font-weight: 500;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--amethyst);
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(56px, 7vw, 100px);
+      font-weight: 900;
+      line-height: 0.92;
+      letter-spacing: -2px;
+      color: var(--white);
+      margin-bottom: 12px;
+      opacity: 0;
+      animation: slideUp 0.8s 0.35s ease forwards;
+    }
+
+    .hero-title .italic-line {
+      font-style: italic;
+      font-weight: 400;
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(218,191,255,0.6);
+      display: block;
+    }
+
+    .hero-title .accent { color: var(--amethyst); }
+
+    .hero-sub {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(18px, 2.2vw, 28px);
+      font-style: italic;
+      font-weight: 400;
+      color: rgba(218,191,255,0.5);
+      margin-bottom: 40px;
+      margin-top: 16px;
+      opacity: 0;
+      animation: slideUp 0.8s 0.5s ease forwards;
+    }
+
+    .hero-desc {
+      font-size: 16px;
+      font-weight: 300;
+      line-height: 1.8;
+      color: rgba(255,255,255,0.45);
+      max-width: 440px;
+      margin-bottom: 56px;
+      opacity: 0;
+      animation: slideUp 0.8s 0.65s ease forwards;
+    }
+
+    .cta-row {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      opacity: 0;
+      animation: slideUp 0.8s 0.8s ease forwards;
+    }
+
+    .btn-play {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--white);
+      color: var(--midnight);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
       letter-spacing: 0.5px;
-      padding: 16px 32px;
+      padding: 18px 36px;
       border-radius: 100px;
       text-decoration: none;
-      transition: background 0.2s, transform 0.2s;
-      box-shadow: 0 8px 24px rgba(44, 42, 74, 0.2);
+      transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+      box-shadow: 0 0 0 0 rgba(144,122,214,0);
     }
 
-    .btn-primary:hover {
-      background: var(--slate);
-      transform: translateY(-2px);
-    }
-
-    .btn-primary svg { width: 18px; height: 18px; }
-
-    .coming-soon-note {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--amethyst);
-      letter-spacing: 0.5px;
-    }
-
-    /* Right panel — abstract fashion illustration */
-    .hero-right {
-      position: relative;
-      background: var(--midnight);
-      overflow: hidden;
-      animation: fadeIn 1.2s ease both;
-    }
-
-    .hero-right::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg,
-        rgba(144, 122, 214, 0.3) 0%,
-        rgba(44, 42, 74, 0.0) 60%,
-        rgba(218, 191, 255, 0.15) 100%
-      );
-    }
-
-    /* Floating fashion silhouette shapes */
-    .shape {
-      position: absolute;
-      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-      opacity: 0.12;
-    }
-
-    .shape-1 {
-      width: 300px; height: 500px;
+    .btn-play:hover {
       background: var(--lavender);
-      top: -60px; left: 20%;
-      transform: rotate(-15deg);
-      animation: float1 8s ease-in-out infinite;
+      color: var(--midnight);
+      transform: translateY(-3px);
+      box-shadow: 0 20px 40px rgba(144,122,214,0.3);
     }
 
-    .shape-2 {
-      width: 180px; height: 300px;
-      background: var(--amethyst);
-      top: 30%; left: 55%;
-      transform: rotate(20deg);
-      border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-      animation: float2 10s ease-in-out infinite;
-      opacity: 0.18;
+    .btn-play svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+    .launch-badge {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
 
-    .shape-3 {
-      width: 400px; height: 400px;
-      background: var(--slate);
-      bottom: -100px; left: -60px;
-      border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-      animation: float3 12s ease-in-out infinite;
-      opacity: 0.2;
+    .launch-year {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--lavender);
+      line-height: 1;
     }
 
-    @keyframes float1 {
-      0%, 100% { transform: rotate(-15deg) translateY(0); }
-      50% { transform: rotate(-12deg) translateY(-20px); }
-    }
-    @keyframes float2 {
-      0%, 100% { transform: rotate(20deg) translateY(0); }
-      50% { transform: rotate(24deg) translateY(15px); }
-    }
-    @keyframes float3 {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-10px) scale(1.02); }
+    .launch-label {
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(218,191,255,0.4);
     }
 
-    /* Center text on right panel */
-    .hero-right-content {
-      position: relative;
-      z-index: 2;
-      height: 100%;
+    /* Hero right — vertical stat strip */
+    .hero-right {
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 60px 40px;
-      text-align: center;
+      position: relative;
+      padding: 140px 80px 80px 40px;
+      opacity: 0;
+      animation: fadeIn 1.2s 1s ease forwards;
     }
 
-    .hero-icon {
-      font-size: 72px;
-      margin-bottom: 24px;
-      animation: floatIcon 6s ease-in-out infinite;
+    .phone-mockup {
+      position: relative;
+      width: 240px;
     }
 
-    @keyframes floatIcon {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-12px); }
+    .phone-frame {
+      width: 240px;
+      height: 480px;
+      background: linear-gradient(145deg, #1E1B35, #2C2A4A);
+      border-radius: 40px;
+      border: 1px solid rgba(144,122,214,0.2);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.05) inset,
+        0 60px 80px -20px rgba(0,0,0,0.8),
+        0 0 60px rgba(144,122,214,0.15);
+      overflow: hidden;
+      position: relative;
     }
 
-    .hero-right-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 32px;
+    .phone-screen {
+      position: absolute;
+      inset: 12px;
+      border-radius: 30px;
+      background: linear-gradient(160deg, #1a1830, #0E0D1A);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 20px;
+    }
+
+    /* Outfit card mock inside phone */
+    .outfit-card-mock {
+      width: 100%;
+      background: rgba(144,122,214,0.08);
+      border: 1px solid rgba(144,122,214,0.15);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .outfit-label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--amethyst);
+      margin-bottom: 10px;
+    }
+
+    .outfit-color-strip {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .color-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.1);
+    }
+
+    .outfit-tip-text {
+      font-size: 9px;
       font-weight: 300;
-      color: var(--lavender);
-      margin-bottom: 16px;
-      letter-spacing: 1px;
-      line-height: 1.2;
+      color: rgba(218,191,255,0.6);
+      line-height: 1.5;
     }
 
-    .hero-right-sub {
-      font-size: 14px;
-      color: rgba(218, 191, 255, 0.7);
-      line-height: 1.7;
-      max-width: 280px;
+    .product-strip {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .product-thumb {
+      flex: 1;
+      height: 52px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    /* Floating tags around phone */
+    .float-tag {
+      position: absolute;
+      background: rgba(14,13,26,0.85);
+      border: 1px solid rgba(144,122,214,0.25);
+      border-radius: 100px;
+      padding: 8px 16px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--lavender);
+      white-space: nowrap;
+      backdrop-filter: blur(10px);
+    }
+
+    .float-tag-1 {
+      top: 20%;
+      right: -20px;
+      animation: tagFloat1 6s ease-in-out infinite;
+    }
+
+    .float-tag-2 {
+      bottom: 30%;
+      left: -30px;
+      animation: tagFloat2 8s ease-in-out infinite;
+    }
+
+    .float-tag-3 {
+      top: 60%;
+      right: -10px;
+      animation: tagFloat1 7s 1s ease-in-out infinite;
+    }
+
+    @keyframes tagFloat1 {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes tagFloat2 {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(8px); }
+    }
+
+    /* Scroll indicator */
+    .scroll-hint {
+      position: absolute;
+      bottom: 40px;
+      left: 80px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 3;
+      opacity: 0;
+      animation: fadeIn 1s 1.5s ease forwards;
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(to bottom, transparent, var(--amethyst));
+    }
+
+    .scroll-text {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      writing-mode: vertical-rl;
+    }
+
+    /* ── MARQUEE ── */
+    .marquee-section {
+      border-top: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 20px 0;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
+
+    .marquee-track {
+      display: flex;
+      gap: 60px;
+      animation: marquee 20s linear infinite;
+      width: max-content;
+    }
+
+    .marquee-item {
+      font-family: 'Playfair Display', serif;
+      font-size: 13px;
+      font-style: italic;
+      font-weight: 400;
+      color: rgba(255,255,255,0.2);
+      white-space: nowrap;
+      letter-spacing: 1px;
+    }
+
+    .marquee-dot {
+      color: var(--amethyst);
+      font-style: normal;
+    }
+
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
     }
 
     /* ── FEATURES ── */
     .features {
-      padding: 100px 80px;
+      padding: 140px 80px;
       position: relative;
-      z-index: 1;
+      z-index: 2;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 80px;
     }
 
     .section-label {
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 11px;
+      font-weight: 500;
       letter-spacing: 3px;
       text-transform: uppercase;
       color: var(--amethyst);
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
 
     .section-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(36px, 4vw, 56px);
-      font-weight: 300;
-      color: var(--midnight);
-      margin-bottom: 60px;
-      max-width: 600px;
-      line-height: 1.1;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(40px, 5vw, 64px);
+      font-weight: 700;
+      line-height: 1.05;
+      color: var(--white);
+      max-width: 560px;
     }
 
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2px;
-      background: rgba(79, 81, 140, 0.1);
-      border-radius: 24px;
-      overflow: hidden;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.03);
+    .section-title em {
+      font-weight: 400;
+      color: rgba(218,191,255,0.5);
     }
 
-    .feature-card {
-      background: var(--cream);
-      padding: 48px 40px;
-      transition: background 0.3s, transform 0.3s;
-    }
-
-    .feature-card:hover { 
-      background: var(--white); 
-    }
-
-    .feature-icon {
-      font-size: 36px;
-      margin-bottom: 24px;
-      display: inline-block;
-      padding: 12px;
-      background: rgba(144, 122, 214, 0.1);
-      border-radius: 16px;
-    }
-
-    .feature-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 24px;
-      font-weight: 600;
-      color: var(--midnight);
-      margin-bottom: 12px;
-    }
-
-    .feature-desc {
-      font-size: 15px;
-      line-height: 1.7;
-      color: var(--slate);
-    }
-
-    /* ── HOW IT WORKS ── */
-    .how {
-      padding: 100px 80px;
-      background: var(--midnight);
-      position: relative;
-      overflow: hidden;
-      z-index: 1;
-    }
-
-    .how::before {
-      content: '';
-      position: absolute;
-      width: 800px; height: 800px;
-      background: radial-gradient(circle, rgba(144,122,214,0.15) 0%, transparent 70%);
-      top: -200px; right: -200px;
+    .section-counter {
+      font-family: 'Playfair Display', serif;
+      font-size: 120px;
+      font-weight: 900;
+      color: rgba(255,255,255,0.03);
+      line-height: 1;
       pointer-events: none;
     }
 
-    .how .section-label { color: var(--lavender); }
-
-    .how .section-title { color: var(--white); }
-
-    .steps {
+    /* Bento grid */
+    .bento {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 60px;
-      position: relative;
-      z-index: 1;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: auto;
+      gap: 16px;
     }
 
-    .step {
+    .bento-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 24px;
+      padding: 40px;
+      transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
       position: relative;
+      overflow: hidden;
     }
 
-    .step-num {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 80px;
-      font-weight: 300;
-      color: rgba(218, 191, 255, 0.15);
+    .bento-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 80% 20%, rgba(144,122,214,0.08) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .bento-card:hover {
+      border-color: rgba(144,122,214,0.25);
+      transform: translateY(-4px);
+      background: rgba(144,122,214,0.04);
+    }
+
+    .bento-card:hover::before { opacity: 1; }
+
+    .b1 { grid-column: span 7; }
+    .b2 { grid-column: span 5; }
+    .b3 { grid-column: span 4; }
+    .b4 { grid-column: span 4; }
+    .b5 { grid-column: span 4; }
+    .b6 { grid-column: span 6; }
+    .b7 { grid-column: span 6; }
+
+    .card-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 48px;
+      font-weight: 900;
+      color: rgba(144,122,214,0.15);
       line-height: 1;
+      margin-bottom: 24px;
+    }
+
+    .card-icon {
+      font-size: 32px;
       margin-bottom: 20px;
+      display: inline-block;
+    }
+
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    .card-desc {
+      font-size: 14px;
+      line-height: 1.75;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .card-tag {
+      display: inline-block;
+      margin-top: 20px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--amethyst);
+      padding: 6px 14px;
+      border: 1px solid rgba(144,122,214,0.3);
+      border-radius: 100px;
+    }
+
+    /* ── HOW ── */
+    .how {
+      padding: 140px 80px;
+      position: relative;
+      z-index: 2;
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .how-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 100px;
+      align-items: center;
+    }
+
+    .steps-list {
+      counter-reset: step;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .step-item {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 24px;
+      padding: 40px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      transition: all 0.3s;
+      cursor: default;
+    }
+
+    .step-item:first-child { padding-top: 0; }
+    .step-item:last-child { border-bottom: none; }
+
+    .step-item:hover .step-circle { background: var(--amethyst); color: var(--white); }
+    .step-item:hover .step-item-title { color: var(--lavender); }
+
+    .step-circle {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      border: 1px solid rgba(144,122,214,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--amethyst);
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+
+    .step-item-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 8px;
       transition: color 0.3s;
     }
 
-    .step:hover .step-num { color: rgba(218, 191, 255, 0.4); }
-
-    .step-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 24px;
-      color: var(--lavender);
-      margin-bottom: 12px;
-      font-weight: 400;
+    .step-item-desc {
+      font-size: 14px;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.4);
     }
 
-    .step-desc {
-      font-size: 15px;
-      line-height: 1.7;
-      color: rgba(218, 191, 255, 0.6);
+    .how-visual {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .how-orb {
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(144,122,214,0.2) 0%, rgba(79,81,140,0.1) 50%, transparent 70%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .how-orb-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 80px;
+      animation: floatIcon 6s ease-in-out infinite;
+    }
+
+    /* Orbit rings */
+    .orbit-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(144,122,214,0.1);
+    }
+
+    .or1 { width: 320px; height: 320px; animation: spin 20s linear infinite; }
+    .or2 { width: 460px; height: 460px; animation: spin 30s linear infinite reverse; border-style: dashed; }
+    .or3 { width: 560px; height: 560px; animation: spin 40s linear infinite; border-color: rgba(144,122,214,0.05); }
+
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes floatIcon {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-16px); }
+    }
+
+    /* orbit dots */
+    .orbit-dot {
+      position: absolute;
+      width: 8px; height: 8px;
+      background: var(--amethyst);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--amethyst);
     }
 
     /* ── MARKETS ── */
     .markets {
-      padding: 100px 80px;
+      padding: 140px 80px;
+      border-top: 1px solid rgba(255,255,255,0.04);
       position: relative;
-      z-index: 1;
+      z-index: 2;
     }
 
     .markets-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 32px;
-      margin-top: 60px;
+      gap: 24px;
+      margin-top: 80px;
     }
 
     .market-card {
-      border: 1px solid rgba(79, 81, 140, 0.15);
-      border-radius: 24px;
-      padding: 48px;
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-      background: var(--white);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 28px;
+      padding: 56px;
+      background: rgba(255,255,255,0.015);
+      transition: all 0.5s cubic-bezier(0.16,1,0.3,1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .market-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(144,122,214,0.1) 0%, transparent 70%);
+      transition: opacity 0.4s;
+      opacity: 0;
     }
 
     .market-card:hover {
-      border-color: var(--amethyst);
-      transform: translateY(-6px);
-      box-shadow: 0 20px 40px rgba(144, 122, 214, 0.1);
+      border-color: rgba(144,122,214,0.3);
+      transform: translateY(-8px);
+      box-shadow: 0 40px 80px rgba(0,0,0,0.4);
     }
 
-    .market-flag { font-size: 42px; margin-bottom: 20px; }
+    .market-card:hover::after { opacity: 1; }
+
+    .market-flag { font-size: 48px; margin-bottom: 28px; display: block; }
 
     .market-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 32px;
-      font-weight: 400;
-      color: var(--midnight);
-      margin-bottom: 12px;
+      font-family: 'Playfair Display', serif;
+      font-size: 40px;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 16px;
+      line-height: 1;
     }
 
     .market-desc {
       font-size: 15px;
-      color: var(--slate);
-      line-height: 1.7;
-      margin-bottom: 24px;
+      color: rgba(255,255,255,0.4);
+      line-height: 1.75;
+      margin-bottom: 32px;
     }
 
     .market-tags {
@@ -450,220 +832,443 @@
 
     .tag {
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 500;
       letter-spacing: 0.5px;
-      padding: 6px 14px;
+      padding: 8px 16px;
       border-radius: 100px;
-      background: rgba(144, 122, 214, 0.1);
-      color: var(--slate);
-      transition: background 0.2s, color 0.2s;
+      background: rgba(144,122,214,0.08);
+      color: rgba(218,191,255,0.6);
+      border: 1px solid rgba(144,122,214,0.15);
+      transition: all 0.2s;
     }
 
     .tag:hover {
-      background: var(--amethyst);
-      color: var(--white);
+      background: rgba(144,122,214,0.2);
+      color: var(--lavender);
+      border-color: rgba(144,122,214,0.4);
     }
 
     /* ── FOOTER ── */
     footer {
-      padding: 48px 80px;
-      border-top: 1px solid rgba(79, 81, 140, 0.1);
+      padding: 60px 80px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      position: relative;
+      z-index: 2;
+    }
+
+    .footer-top {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      position: relative;
-      z-index: 1;
-      background: var(--cream);
+      align-items: flex-start;
+      margin-bottom: 60px;
     }
 
     .footer-brand {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 26px;
+      font-family: 'Playfair Display', serif;
+      font-size: 40px;
+      font-weight: 900;
+      color: var(--white);
+      letter-spacing: -1px;
+    }
+
+    .footer-brand span { color: var(--amethyst); }
+
+    .footer-tagline {
+      font-size: 14px;
+      color: rgba(255,255,255,0.25);
+      margin-top: 8px;
+      font-style: italic;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .footer-links-col h4 {
+      font-size: 11px;
       font-weight: 600;
-      color: var(--midnight);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 20px;
     }
 
-    .footer-note {
-      font-size: 13px;
-      color: var(--slate);
-    }
-
-    .footer-links a {
-      color: var(--slate);
+    .footer-links-col a {
+      display: block;
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
       text-decoration: none;
-      font-size: 13px;
-      margin-left: 24px;
+      margin-bottom: 12px;
       transition: color 0.2s;
     }
 
-    .footer-links a:hover { color: var(--amethyst); }
+    .footer-links-col a:hover { color: var(--lavender); }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 40px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .footer-copy {
+      font-size: 13px;
+      color: rgba(255,255,255,0.2);
+    }
+
+    .footer-copy a {
+      color: rgba(218,191,255,0.4);
+      text-decoration: none;
+    }
+
+    .footer-copy a:hover { color: var(--lavender); }
+
+    /* ── KEYFRAMES ── */
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 1100px) {
-      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .b1,.b2 { grid-column: span 12; }
+      .b3,.b4,.b5 { grid-column: span 6; }
+      .b6,.b7 { grid-column: span 12; }
     }
 
     @media (max-width: 900px) {
-      .hero { grid-template-columns: 1fr; }
-      .hero-right { min-height: 400px; }
-      .hero-left { padding: 60px 32px; }
-      .features { padding: 80px 32px; }
-      .features-grid { grid-template-columns: 1fr; }
-      .how { padding: 80px 32px; }
-      .steps { grid-template-columns: 1fr; gap: 40px; }
-      .markets { padding: 80px 32px; }
+      nav { padding: 24px 32px; }
+      .nav-links { display: none; }
+      .hero-grid { grid-template-columns: 1fr; }
+      .hero-left { padding: 120px 32px 60px; }
+      .hero-right { padding: 40px 32px 80px; min-height: 400px; }
+      .features, .how, .markets { padding: 80px 32px; }
+      .how-inner { grid-template-columns: 1fr; gap: 60px; }
+      .how-visual { display: none; }
       .markets-grid { grid-template-columns: 1fr; }
-      footer { padding: 40px 32px; flex-direction: column; gap: 20px; text-align: center; }
-      .footer-links a { margin: 0 12px; }
+      .market-card { padding: 40px 32px; }
+      .bento { grid-template-columns: 1fr; }
+      .b1,.b2,.b3,.b4,.b5,.b6,.b7 { grid-column: span 1; }
+      .section-header { flex-direction: column; align-items: flex-start; gap: 20px; }
+      .section-counter { display: none; }
+      footer { padding: 60px 32px; }
+      .footer-top { flex-direction: column; gap: 48px; }
+      .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
     }
   </style>
 </head>
 <body>
 
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <nav>
+    <a href="#" class="nav-logo">Spindle<span>.</span></a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#markets">Markets</a></li>
+      <li><a href="https://docs.google.com/document/d/e/2PACX-1vSAprKCQDctahUxdc--JL5VubA1hSACI_bXr8X4AaO5Rw8oQVlJjLZ5ryhMt4lo2A6XOl5RgPkjBKNv/pub" target="_blank">Privacy</a></li>
+    </ul>
+  </nav>
+
   <section class="hero">
-    <div class="hero-left">
-      <div class="badge">
-        <div class="badge-dot"></div>
-        Beta Access Available
-      </div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
 
-      <h1>Spindle<br/><em>AI Studio</em></h1>
-      <p class="tagline">Your wardrobe, reimagined by AI.</p>
+    <div class="hero-grid">
+      <div class="hero-left">
+        <div class="eyebrow">
+          <div class="eyebrow-line"></div>
+          <span class="eyebrow-text">AI Style Intelligence · 2026</span>
+        </div>
 
-      <p class="description">
-        Spindle is an AI-powered personal styling engine. We digitize your closet, chat with you about your style needs, pack for your travels, and generate flawless outfits curated just for you.
-      </p>
+        <h1 class="hero-title">
+          Your Closet,<br/>
+          <span class="italic-line">Reimagined</span>
+          <span class="accent">.</span>
+        </h1>
 
-      <div class="cta-group">
-        <a href="#" class="btn-primary">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3.18 23.76c.3.17.64.24.99.2L16.89 12 13.06 8.17 3.18 23.76zm17.26-10.7L17.7 11.6l-1.02-.6-3.39 3.39 3.5 3.5 3.63-2.02c1.04-.58 1.04-2.23.02-2.81zM3.54.32a1.27 1.27 0 0 0-.36.94v21.47c0 .36.13.68.36.94L16.3 11 3.54.32zm9.52 9.52L16.89 12 13.74 8.85l-3.62-3.62L9.06.32 3.54.32 13.06 9.84z"/>
-          </svg>
-          Get it on Google Play
-        </a>
-        <span class="coming-soon-note">Launching 2026</span>
-      </div>
-    </div>
+        <p class="hero-sub">by Spindle AI Studio</p>
 
-    <div class="hero-right">
-      <div class="shape shape-1"></div>
-      <div class="shape shape-2"></div>
-      <div class="shape shape-3"></div>
-      <div class="hero-right-content">
-        <div class="hero-icon">✨</div>
-        <div class="hero-right-title">AI-Powered Style,<br/>For Every Occasion</div>
-        <p class="hero-right-sub">
-          From rainy office commutes to destination weddings — Spindle builds the perfect look from the clothes you already own.
+        <p class="hero-desc">
+          An AI-powered personal styling engine that digitizes your wardrobe, generates flawless outfit combinations, and connects you to shoppable looks — all from the clothes you already own.
         </p>
+
+        <div class="cta-row">
+          <a href="#" class="btn-play">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3.18 23.76c.3.17.64.24.99.2L16.89 12 13.06 8.17 3.18 23.76zm17.26-10.7L17.7 11.6l-1.02-.6-3.39 3.39 3.5 3.5 3.63-2.02c1.04-.58 1.04-2.23.02-2.81zM3.54.32a1.27 1.27 0 0 0-.36.94v21.47c0 .36.13.68.36.94L16.3 11 3.54.32zm9.52 9.52L16.89 12 13.74 8.85l-3.62-3.62L9.06.32 3.54.32 13.06 9.84z"/>
+            </svg>
+            Get on Google Play
+          </a>
+          <div class="launch-badge">
+            <div class="launch-year">2026</div>
+            <div class="launch-label">Launching</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="phone-mockup">
+          <div class="phone-frame">
+            <div class="phone-screen">
+              <div class="outfit-card-mock">
+                <div class="outfit-label">✦ Style Tip 1 of 3</div>
+                <div class="outfit-color-strip">
+                  <div class="color-dot" style="background:#C9A84C"></div>
+                  <div class="color-dot" style="background:#2C2A4A"></div>
+                  <div class="color-dot" style="background:#F7F3EE"></div>
+                </div>
+                <div class="outfit-tip-text">Layer a cream silk blouse under your midnight blazer for an elevated evening look.</div>
+              </div>
+              <div class="product-strip">
+                <div class="product-thumb">👗</div>
+                <div class="product-thumb">👠</div>
+                <div class="product-thumb">🛍️</div>
+              </div>
+              <div class="outfit-card-mock" style="opacity:0.5">
+                <div class="outfit-label">✦ Shop the Look</div>
+                <div class="outfit-tip-text">3 items · Amazon.in · Myntra</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="float-tag float-tag-1">✦ AI Styled</div>
+          <div class="float-tag float-tag-2">👗 32 Items Digitized</div>
+          <div class="float-tag float-tag-3">🛍 Shop Now</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-hint">
+      <div class="scroll-line"></div>
+      <div class="scroll-text">Scroll to explore</div>
+    </div>
+  </section>
+
+  <div class="marquee-section">
+    <div class="marquee-track">
+      <span class="marquee-item">Wardrobe AI <span class="marquee-dot">✦</span></span>
+      <span class="marquee-item">Outfit Generation <span class="marquee-dot">✦</span></span>
+      <span class="marquee-item">Style Intelligence <span class="marquee-dot">✦</span></span>
+      <span class="marquee-item">Shop the Look <span class="marquee-dot">✦</span></span>
+      <span class="marquee-item">Travel Planning <span class="marquee-dot">✦</span></span>
+      <span class="marquee-item">Taste Profiling <span class="marquee-dot">✦</span></span>
+      <span class="marquee-item">Wardrobe AI <span class="marquee-dot">✦</span></span>
+      <span class="marquee-item">Outfit Generation <span class="marquee-dot">✦</span></span>
+      <span class="marquee-item">Style Intelligence <span class="marquee-dot">✦</span></span>
+      <span class="marquee-item">Shop the Look <span class="marquee-dot">✦</span></span>
+      <span class="marquee-item">Travel Planning <span class="marquee-dot">✦</span></span>
+      <span class="marquee-item">Taste Profiling <span class="marquee-dot">✦</span></span>
+    </div>
+  </div>
+
+  <section class="features" id="features">
+    <div class="section-header">
+      <div>
+        <p class="section-label">The Technology</p>
+        <h2 class="section-title">A complete styling<br/><em>ecosystem</em> in your pocket.</h2>
+      </div>
+      <div class="section-counter">06</div>
+    </div>
+
+    <div class="bento">
+      <div class="bento-card b1">
+        <div class="card-num">01</div>
+        <div class="card-title">Wardrobe AI</div>
+        <p class="card-desc">Snap a photo — our background-removal pipeline instantly catalogues your clothing by color, fabric, silhouette, and category. Your entire closet digitized in minutes.</p>
+        <span class="card-tag">Computer Vision</span>
+      </div>
+      <div class="bento-card b2">
+        <div class="card-num">02</div>
+        <div class="card-title">Loom Styling Engine</div>
+        <p class="card-desc">A physics-driven layering system that renders tops, bottoms, and outerwear with zero gaps and anatomically correct overlap.</p>
+        <span class="card-tag">Proprietary</span>
+      </div>
+      <div class="bento-card b3">
+        <div class="card-num">03</div>
+        <div class="card-icon">💬</div>
+        <div class="card-title">Conversational Stylist</div>
+        <p class="card-desc">Chat naturally with Spindle Bot. "Edgy date night look" returns instant visual answers.</p>
+      </div>
+      <div class="bento-card b4">
+        <div class="card-num">04</div>
+        <div class="card-icon">🧳</div>
+        <div class="card-title">AI Travel Planner</div>
+        <p class="card-desc">Input destination and dates. Spindle checks the forecast and builds a carry-on optimized packing list.</p>
+      </div>
+      <div class="bento-card b5">
+        <div class="card-num">05</div>
+        <div class="card-icon">🛍️</div>
+        <div class="card-title">Shop the Look</div>
+        <p class="card-desc">Real product images from Amazon, Myntra, and Ajio. Click to buy — natively in the app.</p>
+      </div>
+      <div class="bento-card b6">
+        <div class="card-num">06</div>
+        <div class="card-title">Taste Profiling Engine</div>
+        <p class="card-desc">768-dimensional vector embeddings map your wardrobe's aesthetic fingerprint. Every recommendation adapts to your evolving style — not generic suggestions, but a system that genuinely learns you.</p>
+        <span class="card-tag">Vector DB · Semantic Search</span>
+      </div>
+      <div class="bento-card b7" style="background: linear-gradient(135deg, rgba(144,122,214,0.08), rgba(79,81,140,0.05)); border-color: rgba(144,122,214,0.15);">
+        <div class="card-icon" style="font-size:48px">✨</div>
+        <div class="card-title" style="font-size:32px; margin-top:16px">Built for Indian Fashion</div>
+        <p class="card-desc" style="font-size:15px; margin-top:8px">Kurtis. Sarees. Lehengas. Anarkalis. Sharara. Spindle speaks your wardrobe's language — not just Western wear. The first AI stylist that truly understands Indian fashion sensibility.</p>
       </div>
     </div>
   </section>
 
-  <section class="features">
-    <p class="section-label">The Technology</p>
-    <h2 class="section-title">A complete styling ecosystem in your pocket.</h2>
+  <section class="how" id="how">
+    <div class="how-inner">
+      <div>
+        <p class="section-label">The Process</p>
+        <h2 class="section-title" style="margin-bottom:60px">From digital closet<br/>to <em>real-world</em> confidence.</h2>
 
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">👗</div>
-        <div class="feature-title">Wardrobe AI</div>
-        <p class="feature-desc">Upload a photo, and our background-removal pipeline instantly catalogues your clothing by color, fabric, and silhouette.</p>
+        <div class="steps-list">
+          <div class="step-item">
+            <div class="step-circle">1</div>
+            <div>
+              <div class="step-item-title">Digitize Your Wardrobe</div>
+              <p class="step-item-desc">Snap photos of your clothes. AI removes backgrounds and securely catalogues every item by color, fabric, and silhouette in your personal Vector DB.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">2</div>
+            <div>
+              <div class="step-item-title">Describe Your Occasion</div>
+              <p class="step-item-desc">Open the chat or use the planner. Tell Spindle where you're going — a Monday commute, a wedding in Jaipur, or a week in London. It handles weather, culture, and dress codes.</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-circle">3</div>
+            <div>
+              <div class="step-item-title">Style, Share & Shop</div>
+              <p class="step-item-desc">Swipe through perfectly layered outfit options. Share looks with friends. Missing a piece? The native carousel surfaces shoppable real products from Amazon and Myntra.</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">🧵</div>
-        <div class="feature-title">Loom Styling Engine</div>
-        <p class="feature-desc">Our proprietary physics engine mathematically layers tops, bottoms, and outerwear to generate flawless, anatomically correct outfit visualizations.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">💬</div>
-        <div class="feature-title">Conversational Stylist</div>
-        <p class="feature-desc">Not sure what to wear? Chat directly with the integrated Spindle Bot. Ask for an "edgy date night look" and get instant, visual answers.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🧳</div>
-        <div class="feature-title">AI Travel Planner</div>
-        <p class="feature-desc">Input your destination and dates. Spindle checks the forecast and builds a weather-proof, carry-on optimized packing list from your closet.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🛍️</div>
-        <div class="feature-title">Shop the Look</div>
-        <p class="feature-desc">Missing a crucial piece? Discover shoppable recommendations natively integrated via Amazon and premium aggregators.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-title">🎯</div>
-        <div class="feature-title">Taste Profiling</div>
-        <p class="feature-desc">Spindle maps your favorite items using 768-dimensional vector embeddings to understand your unique aesthetic and adapt to your style over time.</p>
+
+      <div class="how-visual">
+        <div class="orbit-ring or1"></div>
+        <div class="orbit-ring or2"></div>
+        <div class="orbit-ring or3"></div>
+        <div class="how-orb">
+          <div class="how-orb-text">✦</div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="how">
-    <p class="section-label">The Process</p>
-    <h2 class="section-title">From digital closet to real-world confidence.</h2>
-
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">01</div>
-        <div class="step-title">Digitize</div>
-        <p class="step-desc">Snap photos of your clothes. Spindle automatically removes backgrounds and securely stores them in your personal Vector DB.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">02</div>
-        <div class="step-title">Configure</div>
-        <p class="step-desc">Open the chat or use the planner to specify your occasion, location, or travel itinerary. Spindle handles the weather logic.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">03</div>
-        <div class="step-title">Style & Shop</div>
-        <p class="step-desc">Swipe through beautifully layered, gap-free outfit options. Missing a jacket? Tap the carousel below to shop perfect matches.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="markets">
-    <p class="section-label">Cross-Border E-Commerce</p>
-    <h2 class="section-title">Built for India.<br/>Ready for the world.</h2>
+  <section class="markets" id="markets">
+    <p class="section-label">Cross-Border Commerce</p>
+    <h2 class="section-title">Built for India.<br/><em>Ready for the world.</em></h2>
 
     <div class="markets-grid">
       <div class="market-card">
-        <div class="market-flag">🇮🇳</div>
+        <span class="market-flag">🇮🇳</span>
         <div class="market-name">India</div>
-        <p class="market-desc">
-          Deep understanding of Indian fashion — Kurtis, Sarees, Lehengas, Anarkalis — alongside Western wear. Shoppable links dynamically routed to local retailers.
-        </p>
+        <p class="market-desc">Deep understanding of Indian fashion — Kurtis, Sarees, Lehengas, Anarkalis, Sharara Pants — alongside Western wear. Shoppable links dynamically routed to local retailers your users already trust.</p>
         <div class="market-tags">
           <span class="tag">Myntra</span>
           <span class="tag">Amazon.in</span>
           <span class="tag">Ajio</span>
           <span class="tag">Ethnic Wear</span>
           <span class="tag">Indo-Western</span>
+          <span class="tag">Admitad</span>
         </div>
       </div>
       <div class="market-card">
-        <div class="market-flag">🌍</div>
+        <span class="market-flag">🌍</span>
         <div class="market-name">Global</div>
-        <p class="market-desc">
-          International fashion coverage with shoppable looks from leading global fashion networks. Style recommendations that understand complex layering.
-        </p>
+        <p class="market-desc">International fashion coverage with shoppable recommendations from leading global networks. Style intelligence that understands complex cultural layering across geographies.</p>
         <div class="market-tags">
-          <span class="tag">Amazon Associates</span>
-          <span class="tag">Skimlinks</span>
+          <span class="tag">Amazon US</span>
           <span class="tag">ASOS</span>
           <span class="tag">Nordstrom</span>
+          <span class="tag">CJ Affiliate</span>
+          <span class="tag">Rakuten</span>
+          <span class="tag">Gap</span>
         </div>
       </div>
     </div>
   </section>
 
   <footer>
-    <div class="footer-brand">Spindle.</div>
-    <p class="footer-note">© 2026 Spindle AI Studio · The Future of Digital Wardrobes</p>
-    <div class="footer-links">
-      <a href="#">Privacy Policy</a>
-      <a href="#">Terms of Service</a>
-      <a href="mailto:hello@spindleapp.com">Contact</a>
+    <div class="footer-top">
+      <div>
+        <div class="footer-brand">Spindle<span>.</span></div>
+        <div class="footer-tagline">The Future of Digital Wardrobes</div>
+      </div>
+
+      <div class="footer-links-col">
+        <h4>App</h4>
+        <a href="#">Google Play</a>
+        <a href="#">Beta Access</a>
+        <a href="#">Changelog</a>
+      </div>
+
+      <div class="footer-links-col">
+        <h4>Company</h4>
+        <a href="https://docs.google.com/document/d/e/2PACX-1vSAprKCQDctahUxdc--JL5VubA1hSACI_bXr8X4AaO5Rw8oQVlJjLZ5ryhMt4lo2A6XOl5RgPkjBKNv/pub" target="_blank">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="mailto:hello@spindleapp.com">Contact</a>
+      </div>
+
+      <div class="footer-links-col">
+        <h4>Markets</h4>
+        <a href="#">India</a>
+        <a href="#">Global</a>
+        <a href="#">Affiliates</a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2026 Spindle AI Studio · All rights reserved · <a href="https://docs.google.com/document/d/e/2PACX-1vSAprKCQDctahUxdc--JL5VubA1hSACI_bXr8X4AaO5Rw8oQVlJjLZ5ryhMt4lo2A6XOl5RgPkjBKNv/pub" target="_blank">Privacy Policy</a></p>
+      <p class="footer-copy" style="font-style:italic; font-family:'Playfair Display',serif">Dress the life you want.</p>
     </div>
   </footer>
+
+  <script>
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.transform = `translate(${mx - 4}px, ${my - 4}px)`;
+    });
+
+    function animateRing() {
+      rx += (mx - rx - 18) * 0.12;
+      ry += (my - ry - 18) * 0.12;
+      ring.style.transform = `translate(${rx}px, ${ry}px)`;
+      requestAnimationFrame(animateRing);
+    }
+    animateRing();
+
+    // Fade in on scroll
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.style.opacity = '1';
+          e.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.bento-card, .step-item, .market-card').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(24px)';
+      el.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+      observer.observe(el);
+    });
+  </script>
 
 </body>
 </html>
